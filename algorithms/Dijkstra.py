@@ -46,7 +46,7 @@ def _reconstruct(parent: Dict[Coordinate, Coordinate], start: Coordinate, goal: 
 
 
 def dijkstra_steps(maze: np.ndarray, start: Coordinate, goal: Coordinate) -> Generator[SearchStep, None, SearchResult]:
-    """Duyệt Dijkstra theo từng bước để phục vụ animation.
+    """Duyệt Dijkstra theo từng bước
 
     Args:
         maze: Ma trận NumPy, -1 là tường, >0 là chi phí đi vào ô.
@@ -91,7 +91,6 @@ def dijkstra_steps(maze: np.ndarray, start: Coordinate, goal: Coordinate) -> Gen
 
 
 def run_dijkstra(maze: np.ndarray, start: Coordinate, goal: Coordinate) -> SearchResult:
-    """Chạy Dijkstra đến hết và trả về kết quả cuối (không animation)."""
     gen = dijkstra_steps(maze, start, goal)
     while True:
         try:

@@ -30,7 +30,7 @@ def _h(a: Coordinate, b: Coordinate) -> float:
 
 
 def _neighbors(maze: np.ndarray, node: Coordinate):
-    """Sinh các ô láng giềng hợp lệ (không phải tường, trong biên)."""
+    """Sinh các ô láng giềng hợp lệ."""
     rows, cols = maze.shape
     r, c = node
     for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):
@@ -53,7 +53,7 @@ def _reconstruct(parent: Dict[Coordinate, Coordinate], start: Coordinate, goal: 
 
 
 def greedy_steps(maze: np.ndarray, start: Coordinate, goal: Coordinate) -> Generator[SearchStep, None, SearchResult]:
-    """Duyệt Greedy Best-First Search theo từng bước để phục vụ animation.
+    """Duyệt Greedy Best-First Search theo từng bước
 
     Greedy chỉ dùng heuristic h(n) để ưu tiên ô gần đích hơn,
     không cộng thêm chi phí thực g(n) khi chọn nút kế tiếp.
@@ -88,7 +88,7 @@ def greedy_steps(maze: np.ndarray, start: Coordinate, goal: Coordinate) -> Gener
 
 
 def run_greedy(maze: np.ndarray, start: Coordinate, goal: Coordinate) -> SearchResult:
-    """Chạy Greedy đến khi kết thúc và trả về kết quả cuối."""
+    """Chạy Greedy đến khi kết thúc và trả về kết quả cuối cùng."""
     gen = greedy_steps(maze, start, goal)
     while True:
         try:
@@ -105,7 +105,7 @@ if __name__ == "__main__":
         [-1, -1, 2, -1, 2],
         [1, 1, 1, 1, 1],
     ], dtype=np.int32)
-    result = run_greedy(maze, (0, 0), (4, 4))
+    result = run_greedy(maze, (0, 0), (3, 4))
     print("Greedy")
     print("Path:", result.path)
     print("Total cost:", result.total_cost)

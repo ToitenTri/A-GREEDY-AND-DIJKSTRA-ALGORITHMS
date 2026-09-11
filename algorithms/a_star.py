@@ -60,7 +60,7 @@ def astar_steps(
     A* chọn ô có f(n) = g(n) + w*h(n):
     - g(n): chi phí thực từ start tới n
     - h(n): heuristic Manhattan từ n tới goal
-    - w: hệ số heuristic (w=1.0 là A* chuẩn)
+    - w: hệ số heuristic
     """
     t0 = time.perf_counter()
     w = max(1.0, heuristic_weight)
@@ -107,7 +107,6 @@ def astar_steps(
 def run_astar(
     maze: np.ndarray, start: Coordinate, goal: Coordinate, heuristic_weight: float = 2.0
 ) -> SearchResult:
-    """Chạy A* đến khi kết thúc và trả về kết quả cuối."""
     gen = astar_steps(maze, start, goal, heuristic_weight=heuristic_weight)
     while True:
         try:
