@@ -76,7 +76,6 @@ def regenerate_until_path(
     base_seed = seed if seed is not None else random.SystemRandom().randint(0, 10_000_000)
     for attempt in range(max_attempts):
         data = generate_weighted_maze(rows, cols, wall_prob, seed=base_seed + attempt)
-        # goal must survive the flood-fill cleanup, i.e. be reachable from start
         if maze_reachable(data.maze, data.goal):
             return data
     raise RuntimeError("Cannot generate solvable maze with current settings.")
