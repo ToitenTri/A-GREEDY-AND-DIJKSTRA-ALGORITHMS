@@ -1,6 +1,4 @@
-﻿"""Generate weighted mazes shared by all algorithms."""
-
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import random
 from collections import deque
