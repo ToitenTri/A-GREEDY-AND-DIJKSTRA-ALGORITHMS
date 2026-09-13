@@ -32,8 +32,6 @@ def _remove_isolated_regions(maze: np.ndarray, start: Coordinate) -> None:
                 if maze[nr, nc] != -1:
                     visited[nr, nc] = True
                     queue.append((nr, nc))
-
-    # Any open cell that flood-fill never reached is an isolated island -> wall it off
     for r in range(rows):
         for c in range(cols):
             if maze[r, c] != -1 and not visited[r, c]:
