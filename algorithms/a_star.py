@@ -55,7 +55,7 @@ def _reconstruct(parent: Dict[Coordinate, Coordinate], start: Coordinate, goal: 
 def astar_steps(
     maze: np.ndarray, start: Coordinate, goal: Coordinate, heuristic_weight: float = 2.0
 ) -> Generator[SearchStep, None, SearchResult]:
-    """Duyệt A* theo từng bước để phục vụ animation.
+    """Duyệt A* theo từng bước.
 
     A* chọn ô có f(n) = g(n) + w*h(n):
     - g(n): chi phí thực từ start tới n
