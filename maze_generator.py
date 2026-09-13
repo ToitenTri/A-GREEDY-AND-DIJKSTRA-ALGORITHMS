@@ -74,6 +74,7 @@ def regenerate_until_path(
     max_attempts: int = 200,
 ) -> MazeData:
     base_seed = seed if seed is not None else random.SystemRandom().randint(0, 10_000_000)
+    
     for attempt in range(max_attempts):
         data = generate_weighted_maze(rows, cols, wall_prob, seed=base_seed + attempt)
         if maze_reachable(data.maze, data.goal):
