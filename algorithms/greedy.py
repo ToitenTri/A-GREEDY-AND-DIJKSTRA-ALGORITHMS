@@ -37,7 +37,8 @@ def _neighbors(maze: np.ndarray, node: Coordinate):
             yield (nr, nc)
 
 
-def _reconstruct(parent: Dict[Coordinate, Coordinate], start: Coordinate, goal: Coordinate) -> List[Coordinate]:
+def _reconstruct(parent: Dict[Coordinate, Coordinate],
+                 start: Coordinate, goal: Coordinate) -> List[Coordinate]:
     """
     Backpropagation (Quay lui): Tìm đường đi từ goal ---> start
     """
@@ -52,7 +53,9 @@ def _reconstruct(parent: Dict[Coordinate, Coordinate], start: Coordinate, goal: 
     return path
 
 
-def greedy_steps(maze: np.ndarray, start: Coordinate, goal: Coordinate) -> Generator[SearchStep, None, SearchResult]:
+def greedy_steps(maze: np.ndarray,
+                 start: Coordinate,
+                 goal: Coordinate) -> Generator[SearchStep, None, SearchResult]:
     """Duyệt Greedy Best-First Search theo từng bước
 
     Greedy chỉ dùng heuristic h(n) để ưu tiên ô gần đích hơn,
