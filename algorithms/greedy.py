@@ -25,12 +25,10 @@ class SearchResult:
 
 
 def _h(a: Coordinate, b: Coordinate) -> float:
-    """Heuristic Manhattan giữa hai ô trên lưới 4 hướng."""
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 
 def _neighbors(maze: np.ndarray, node: Coordinate):
-    """Sinh các ô láng giềng hợp lệ."""
     rows, cols = maze.shape
     r, c = node
     for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):
@@ -40,7 +38,9 @@ def _neighbors(maze: np.ndarray, node: Coordinate):
 
 
 def _reconstruct(parent: Dict[Coordinate, Coordinate], start: Coordinate, goal: Coordinate) -> List[Coordinate]:
-    """Khôi phục đường đi từ goal về start bằng bảng parent."""
+    """
+    Backpropagation (Quay lui): Tìm đường đi từ goal ---> start
+    """
     if goal not in parent and goal != start:
         return []
     path = [goal]
