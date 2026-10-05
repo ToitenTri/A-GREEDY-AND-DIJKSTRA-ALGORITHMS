@@ -53,14 +53,14 @@ def _reconstruct(parent: Dict[Coordinate, Coordinate], start: Coordinate, goal: 
 
 
 def astar_steps(
-    maze: np.ndarray, start: Coordinate, goal: Coordinate, heuristic_weight: float = 2.0
+    maze: np.ndarray, start: Coordinate, goal: Coordinate, heuristic_weight: float = 1.0
 ) -> Generator[SearchStep, None, SearchResult]:
     """Duyệt A* theo từng bước.
 
-    A* chọn ô có f(n) = g(n) + w*h(n):
+    A* mặc định chọn ô có f(n) = g(n) + h(n):
     - g(n): chi phí thực từ start tới n
     - h(n): heuristic Manhattan từ n tới goal
-    - w: hệ số heuristic
+    - w: mặc định 1.0; w > 1 dùng Weighted A* với f(n) = g(n) + w*h(n)
     """
     t0 = time.perf_counter()
     w = max(1.0, heuristic_weight)
@@ -105,7 +105,7 @@ def astar_steps(
 
 
 def run_astar(
-    maze: np.ndarray, start: Coordinate, goal: Coordinate, heuristic_weight: float = 2.0
+    maze: np.ndarray, start: Coordinate, goal: Coordinate, heuristic_weight: float = 1.0
 ) -> SearchResult:
     gen = astar_steps(maze, start, goal, heuristic_weight=heuristic_weight)
     while True:
