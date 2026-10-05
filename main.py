@@ -65,11 +65,18 @@ def main():
     level_idx = 0
     seed = 42
     cfg = LEVELS[level_idx]
-    maze_data = regenerate_until_path(
-        _has_path, rows=cfg["rows"], cols=cfg["cols"], wall_prob=cfg["wall_prob"], seed=seed
-    )
+    try:
+        maze_data = regenerate_until_path(
+            _has_path, rows=cfg["rows"], cols=cfg["cols"], wall_prob=cfg["wall_prob"], seed=seed
+        )
+    except RuntimeError as error:
+        print(f"Cannot generate initial maze: {error}")
+        pygame.quit()
+        return
+    seed = maze_data.seed if maze_data.seed is not None else seed
     panels = build_panels(screen_w, screen_h, maze_data, font)
 
+    error_message = ""
     summary_done = False
     running = True
     while running:
@@ -77,37 +84,35 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
+                if event.key not in (pygame.K_r, pygame.K_f, pygame.K_UP, pygame.K_DOWN):
+                    continue
+                next_level_idx, next_seed = level_idx, seed
                 if event.key == pygame.K_r:
-                    seed += 1
-                    cfg = LEVELS[level_idx]
-                    maze_data = regenerate_until_path(
-                        _has_path, rows=cfg["rows"], cols=cfg["cols"], wall_prob=cfg["wall_prob"], seed=seed
-                    )
-                    panels = build_panels(screen_w, screen_h, maze_data, font)
-                    summary_done = False
+                    next_seed = seed + 1
                 elif event.key == pygame.K_f:
-                    cfg = LEVELS[level_idx]
-                    maze_data = regenerate_until_path(
-                        _has_path, rows=cfg["rows"], cols=cfg["cols"], wall_prob=cfg["wall_prob"], seed=42
-                    )
-                    panels = build_panels(screen_w, screen_h, maze_data, font)
-                    summary_done = False
+                    next_seed = 42
                 elif event.key == pygame.K_UP:
-                    level_idx = min(level_idx + 1, len(LEVELS) - 1)
-                    cfg = LEVELS[level_idx]
-                    maze_data = regenerate_until_path(
-                        _has_path, rows=cfg["rows"], cols=cfg["cols"], wall_prob=cfg["wall_prob"], seed=seed
-                    )
-                    panels = build_panels(screen_w, screen_h, maze_data, font)
-                    summary_done = False
+                    next_level_idx = min(level_idx + 1, len(LEVELS) - 1)
                 elif event.key == pygame.K_DOWN:
-                    level_idx = max(level_idx - 1, 0)
-                    cfg = LEVELS[level_idx]
-                    maze_data = regenerate_until_path(
-                        _has_path, rows=cfg["rows"], cols=cfg["cols"], wall_prob=cfg["wall_prob"], seed=seed
+                    next_level_idx = max(level_idx - 1, 0)
+                if event.key in (pygame.K_UP, pygame.K_DOWN) and next_level_idx == level_idx:
+                    continue
+                next_cfg = LEVELS[next_level_idx]
+                try:
+                    next_maze_data = regenerate_until_path(
+                        _has_path, rows=next_cfg["rows"], cols=next_cfg["cols"],
+                        wall_prob=next_cfg["wall_prob"], seed=next_seed
                     )
-                    panels = build_panels(screen_w, screen_h, maze_data, font)
-                    summary_done = False
+                except RuntimeError as error:
+                    print(f"Cannot generate maze: {error}")
+                    error_message = "Cannot generate maze. Press R or F to retry."
+                    continue
+                level_idx = next_level_idx
+                maze_data = next_maze_data
+                seed = maze_data.seed if maze_data.seed is not None else next_seed
+                panels = build_panels(screen_w, screen_h, maze_data, font)
+                summary_done = False
+                error_message = ""
 
         screen.fill((20, 20, 20))
         for p in panels:
@@ -129,13 +134,16 @@ def main():
 
         cfg = LEVELS[level_idx]
         level_text = small_font.render(
-            f"{cfg['name']} | size={cfg['rows']}x{cfg['cols']} | wall_prob={cfg['wall_prob']:.2f}",
+            f"{cfg['name']} | size={cfg['rows']}x{cfg['cols']} | wall_prob={cfg['wall_prob']:.2f} | seed={seed}",
             True,
             (230, 230, 230),
         )
         hint = small_font.render("R: random | F: fixed(seed=42) | UP/DOWN: level", True, (230, 230, 230))
         screen.blit(level_text, (12, screen_h - 56))
         screen.blit(hint, (12, screen_h - 30))
+        if error_message:
+            error_text = small_font.render(error_message, True, (255, 140, 140))
+            screen.blit(error_text, (12, screen_h - 82))
 
         pygame.display.flip()
         clock.tick(60)

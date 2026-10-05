@@ -185,4 +185,4 @@ Các hàm này tiêu thụ toàn bộ generator và trả về kết quả cuố
 5. Level 5: `36x36`, `wall_prob=0.30`
 
 Màn hình chạy ở độ phân giải **Full HD (1920x1080)**.
-# A-GREEDY-AND-UCS-ALGORITHMS
+# A*, GREEDY AND UCS-ALGORITHMS
