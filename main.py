@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pygame
 
-from algorithms.Dijkstra import dijkstra_steps, run_dijkstra
+from algorithms.ucs import ucs_steps, run_ucs
 from algorithms.a_star import astar_steps
 from algorithms.greedy import greedy_steps
 from maze_generator import regenerate_until_path
@@ -22,7 +22,7 @@ LEVELS = [
 
 
 def _has_path(maze, start, goal) -> bool:
-    return bool(run_dijkstra(maze, start, goal).path)
+    return bool(run_ucs(maze, start, goal).path)
 
 
 def build_panels(screen_w: int, screen_h: int, maze_data, font):
@@ -38,7 +38,7 @@ def build_panels(screen_w: int, screen_h: int, maze_data, font):
     cell_size = max(6, min((panel_w - inner_pad * 2) // cols, (panel_h - info_h - inner_pad * 2) // rows))
 
     algos = [
-        ("Dijkstra", dijkstra_steps(maze.copy(), start, goal)),
+        ("UCS", ucs_steps(maze.copy(), start, goal)),
         ("A*", astar_steps(maze.copy(), start, goal)),
         ("Greedy", greedy_steps(maze.copy(), start, goal)),
     ]
@@ -53,7 +53,7 @@ def build_panels(screen_w: int, screen_h: int, maze_data, font):
 
 def main():
     pygame.init()
-    pygame.display.set_caption("Maze Comparison: Dijkstra / A* / Greedy")
+    pygame.display.set_caption("Maze Comparison: UCS / A* / Greedy")
 
     info = pygame.display.Info()
     screen_w, screen_h = info.current_w, info.current_h
