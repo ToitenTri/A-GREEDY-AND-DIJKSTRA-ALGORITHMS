@@ -1,131 +1,53 @@
-﻿from __future__ import annotations
-
 import heapq
-import time
-from dataclasses import dataclass
-from typing import Dict, Generator, List, Set, Tuple
+from math import inf, isfinite
 
 import numpy as np
 
-Coordinate = Tuple[int, int]
+if __package__:
+    from .common import Coordinate, SearchGenerator, SearchResult, SearchStep, demo, finish_search, manhattan, neighbors, search_result, timed_search
+else:
+    from common import Coordinate, SearchGenerator, SearchResult, SearchStep, demo, finish_search, manhattan, neighbors, search_result, timed_search
 
 
-@dataclass
-class SearchStep:
-    current: Coordinate
-    explored_count: int
-
-
-@dataclass
-class SearchResult:
-    path: List[Coordinate]
-    total_cost: float
-    explored_nodes: int
-    runtime: float
-
-
-def _h(a: Coordinate, b: Coordinate) -> float:
-    """Heuristic Manhattan giữa hai ô trên lưới 4 hướng."""
-    return abs(a[0] - b[0]) + abs(a[1] - b[1])
-
-
-def _neighbors(maze: np.ndarray, node: Coordinate):
-    """Sinh các ô láng giềng hợp lệ (không phải tường, trong biên)."""
-    rows, cols = maze.shape
-    r, c = node
-    for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-        nr, nc = r + dr, c + dc
-        if 0 <= nr < rows and 0 <= nc < cols and maze[nr, nc] != -1:
-            yield (nr, nc)
-
-
-def _reconstruct(parent: Dict[Coordinate, Coordinate], start: Coordinate, goal: Coordinate) -> List[Coordinate]:
-    """Khôi phục đường đi từ goal về start bằng bảng parent."""
-    if goal not in parent and goal != start:
-        return []
-    path = [goal]
-    cur = goal
-    while cur != start:
-        cur = parent[cur]
-        path.append(cur)
-    path.reverse()
-    return path
-
-
+@timed_search
 def astar_steps(
     maze: np.ndarray, start: Coordinate, goal: Coordinate, heuristic_weight: float = 1.0
-) -> Generator[SearchStep, None, SearchResult]:
-    """Duyệt A* theo từng bước.
-
-    A* mặc định chọn ô có f(n) = g(n) + h(n):
-    - g(n): chi phí thực từ start tới n
-    - h(n): heuristic Manhattan từ n tới goal
-    - w: mặc định 1.0; w > 1 dùng Weighted A* với f(n) = g(n) + w*h(n)
-    """
-    t0 = time.perf_counter()
-    w = max(1.0, heuristic_weight)
-    start_h = _h(start, goal)
-    pq: List[Tuple[float, float, float, Coordinate]] = [(start_h, start_h, 0.0, start)]
-    g_cost: Dict[Coordinate, float] = {start: 0.0}
-    parent: Dict[Coordinate, Coordinate] = {}
-    closed_set: Set[Coordinate] = set()
-    open_best_f: Dict[Coordinate, float] = {start: start_h}
-
+) -> SearchGenerator:
+    """Prioritize g + w*h; w=1 is optimal A*, w>1 is Weighted A*."""
+    if not isfinite(heuristic_weight):
+        raise ValueError("Heuristic weight must be finite.")
+    weight = max(1.0, heuristic_weight)
+    h = manhattan(start, goal)
+    queue = [(weight * h, h, 0.0, start)]
+    distances = {start: 0.0}
+    parent = {}
+    closed = set()
     explored = 0
-    while pq:
-        f_cur, _, cur_g, current = heapq.heappop(pq)
-        if current in closed_set:
+    while queue:
+        _, _, cost, current = heapq.heappop(queue)
+        if current in closed or cost > distances[current]:
             continue
-        if f_cur > open_best_f.get(current, float("inf")):
-            continue
-
-        closed_set.add(current)
+        closed.add(current)
         explored += 1
-        yield SearchStep(current=current, explored_count=explored)
-
+        yield SearchStep(current, explored)
         if current == goal:
             break
-
-        for nxt in _neighbors(maze, current):
-            ng = cur_g + float(maze[nxt])
-            if nxt in closed_set and ng >= g_cost.get(nxt, float("inf")):
-                continue
-            if ng < g_cost.get(nxt, float("inf")):
-                g_cost[nxt] = ng
+        for nxt in neighbors(maze, current):
+            new_cost = cost + float(maze[nxt])
+            if new_cost < distances.get(nxt, inf):
+                distances[nxt] = new_cost
                 parent[nxt] = current
-                h = _h(nxt, goal)
-                f = ng + w * h
-                open_best_f[nxt] = f
-                heapq.heappush(pq, (f, h, ng, nxt))
-
-    runtime = time.perf_counter() - t0
-    path = _reconstruct(parent, start, goal)
-    total_cost = g_cost.get(goal, float("inf")) if path else float("inf")
-    return SearchResult(path=path, total_cost=total_cost, explored_nodes=explored, runtime=runtime)
+                closed.discard(nxt)  # Reopen a better path, also for Weighted A*.
+                h = manhattan(nxt, goal)
+                heapq.heappush(queue, (new_cost + weight * h, h, new_cost, nxt))
+    return search_result(parent, maze, start, goal, explored)
 
 
 def run_astar(
     maze: np.ndarray, start: Coordinate, goal: Coordinate, heuristic_weight: float = 1.0
 ) -> SearchResult:
-    gen = astar_steps(maze, start, goal, heuristic_weight=heuristic_weight)
-    while True:
-        try:
-            next(gen)
-        except StopIteration as done:
-            return done.value
+    return finish_search(astar_steps(maze, start, goal, heuristic_weight))
 
 
 if __name__ == "__main__":
-    maze = np.array([
-        [1, 2, 2, -1, 1],
-        [1, -1, 3, -1, 2],
-        [1, 1, 1, 1, 3],
-        [-1, -1, 2, -1, 2],
-        [1, 1, 1, 1, 1],
-    ], dtype=np.int32)
-    result = run_astar(maze, (0, 0), (4, 4))
-    print("A*")
-    print("Path:", result.path)
-    print("Total cost:", result.total_cost)
-    print("Explored nodes:", result.explored_nodes)
-    print("Runtime (s):", result.runtime)
+    demo("A*", run_astar)

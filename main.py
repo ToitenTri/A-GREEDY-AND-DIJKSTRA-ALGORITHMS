@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from pathlib import Path
 from dataclasses import replace
 
@@ -26,16 +24,16 @@ def build_panels(screen_w: int, screen_h: int, maze_data, font, show_heuristic=F
     cell_size = max(6, min((panel_w - inner_pad * 2) // cols, (panel_h - info_h - inner_pad * 2) // rows))
 
     algos = [
-        ("Dijkstra", dijkstra_steps(maze.copy(), start, goal)),
-        ("A*", astar_steps(maze.copy(), start, goal)),
-        ("Greedy", greedy_steps(maze.copy(), start, goal)),
+        ("Dijkstra", dijkstra_steps(maze, start, goal)),
+        ("A*", astar_steps(maze, start, goal)),
+        ("Greedy", greedy_steps(maze, start, goal)),
     ]
 
     panels = []
     for i, (name, gen) in enumerate(algos):
         x = margin + i * (panel_w + margin)
         rect = pygame.Rect(x, margin, panel_w, panel_h)
-        panels.append(AgentPanel(name, maze.copy(), start, goal, gen, Scoreboard(font, name), rect, cell_size,
+        panels.append(AgentPanel(name, maze, start, goal, gen, Scoreboard(font, name), rect, cell_size,
                                  show_heuristic=show_heuristic))
     return panels
 
@@ -62,6 +60,7 @@ def main():
     running = True
     while running:
         for event in pygame.event.get():
+            restart = False
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
@@ -86,9 +85,7 @@ def main():
                     continue
                 level_idx = next_level_idx
                 maze_data = fixed_maps[level_idx][1]
-                panels = build_panels(screen_w, screen_h, maze_data, font, show_heuristic)
-                summary_done = False
-                error_message = ""
+                restart = True
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button in (1, 3):
                 cell = next((cell for panel in panels if (cell := panel.cell_at(event.pos)) is not None), None)
                 if cell is None:
@@ -102,6 +99,9 @@ def main():
                     maze_data = replace(maze_data, goal=cell)
                 name, _ = fixed_maps[level_idx]
                 fixed_maps[level_idx] = (name, maze_data)
+                restart = True
+
+            if restart:
                 panels = build_panels(screen_w, screen_h, maze_data, font, show_heuristic)
                 summary_done = False
                 error_message = ""

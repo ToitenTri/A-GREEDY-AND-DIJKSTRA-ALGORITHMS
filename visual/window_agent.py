@@ -1,15 +1,11 @@
-﻿from __future__ import annotations
-
-import time
 from dataclasses import dataclass, field
-from typing import List, Set, Tuple
 
 import numpy as np
 import pygame
 
 from visual.scoreboard import Scoreboard
 
-Coordinate = Tuple[int, int]
+from algorithms.common import Coordinate, SearchGenerator, manhattan
 
 
 @dataclass
@@ -18,14 +14,14 @@ class AgentPanel:
     maze: np.ndarray
     start: Coordinate
     goal: Coordinate
-    step_generator: object
+    step_generator: SearchGenerator
     scoreboard: Scoreboard
     panel_rect: pygame.Rect
     cell_size: int = 18
-    explored: Set[Coordinate] = field(default_factory=set)
-    final_path: List[Coordinate] = field(default_factory=list)
+    explored: set[Coordinate] = field(default_factory=set)
+    final_path: list[Coordinate] = field(default_factory=list)
+    path_cells: set[Coordinate] = field(default_factory=set, init=False)
     done: bool = False
-    started_at: float = field(default_factory=time.perf_counter)
     runtime: float = 0.0
     cost: float = 0.0
     explored_nodes: int = 0
@@ -51,7 +47,7 @@ class AgentPanel:
 
     def displayed_value(self, row: int, col: int) -> int:
         if self.show_heuristic:
-            return abs(row - self.goal[0]) + abs(col - self.goal[1])
+            return manhattan((row, col), self.goal)
         # Starting here costs nothing; other cells show their entry weight.
         if (row, col) == self.start:
             return 0
@@ -68,7 +64,6 @@ class AgentPanel:
     def tick(self):
         if self.done:
             return
-        self.runtime = time.perf_counter() - self.started_at
         try:
             step = next(self.step_generator)
             self.explored.add(step.current)
@@ -76,7 +71,8 @@ class AgentPanel:
         except StopIteration as finished:
             result = finished.value
             self.final_path = result.path
-            self.cost = result.total_cost if result.total_cost != float("inf") else 0.0
+            self.path_cells = set(result.path)
+            self.cost = result.total_cost
             self.explored_nodes = result.explored_nodes
             self.runtime = result.runtime
             self.done = True
@@ -100,7 +96,7 @@ class AgentPanel:
                     color = (210, 210, 210)
                 if (r, c) in self.explored:
                     color = (255, 200, 120)
-                if (r, c) in self.final_path:
+                if (r, c) in self.path_cells:
                     color = (100, 220, 120)
                 if (r, c) == self.start:
                     color = (80, 140, 255)
@@ -113,7 +109,7 @@ class AgentPanel:
                     screen.blit(label, label.get_rect(center=rect.center))
 
         metrics = {
-            "status": "done" if self.done else "running",
+            "status": ("done" if self.final_path else "no path") if self.done else "running",
             "runtime": self.runtime,
             "cost": self.cost,
             "explored": self.explored_nodes,

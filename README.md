@@ -1,18 +1,9 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Ứng dụng so sánh thuật toán giải mê cung
+
+Tài liệu bổ sung:
+
+- [Các hàm và cấu trúc dữ liệu](docs/functions.md)
+- [Vai trò và quan hệ của các file](docs/files.md)
 
 Ứng dụng trực quan hóa và so sánh 3 thuật toán tìm đường trên **cùng một mê cung có trọng số**:
 
@@ -51,6 +42,7 @@ pip install -r requirements.txt
 ├── maze_generator.json
 ├── maze_generator.py
 ├── algorithms/
+│   ├── common.py
 │   ├── dijkstra.py
 │   ├── a_star.py
 │   └── greedy.py
@@ -144,7 +136,7 @@ Kết quả in ra gồm:
 
 ## 6. Giải thích các hàm trong từng module thuật toán
 
-Ba module (`dijkstra.py`, `a_star.py`, `greedy.py`) có cùng khung:
+Ba module dùng chung cấu trúc dữ liệu và hàm phụ từ `algorithms/common.py`:
 
 ### 6.1 `SearchStep` (dataclass)
 
@@ -158,16 +150,16 @@ Dùng để `yield` theo thời gian thực cho phần Pygame vẽ animation.
 - `path`: danh sách tọa độ đường đi từ start đến goal
 - `total_cost`: tổng chi phí đường đi
 - `explored_nodes`: tổng số ô đã duyệt
-- `runtime`: thời gian chạy (giây)
+- `runtime`: thời gian thực thi tìm kiếm (giây), không gồm chờ frame và vẽ
 
-### 6.3 `_neighbors(maze, node)`
+### 6.3 `neighbors(maze, node)`
 
 Sinh các ô kề hợp lệ theo 4 hướng (trên, dưới, trái, phải), loại bỏ:
 
 - ô vượt biên
 - ô tường (`-1`)
 
-### 6.4 `_reconstruct(parent, start, goal)`
+### 6.4 `reconstruct(parent, start, goal)`
 
 Khôi phục đường đi từ bảng `parent` bằng cách đi ngược từ `goal` về `start`.
 
@@ -179,7 +171,7 @@ Khôi phục đường đi từ bảng `parent` bằng cách đi ngược từ `
 
 Các hàm này:
 
-1. đo thời gian bằng `time.perf_counter()`,
+1. dùng `timed_search` để đo thời gian thực thi, bỏ thời gian chờ animation,
 2. duyệt từng bước và `yield SearchStep`,
 3. kết thúc thì `return SearchResult`.
 
@@ -215,4 +207,3 @@ Tất cả ô mở của mỗi bản đồ thuộc cùng một vùng liên thôn
 chọn bất kỳ hai ô mở làm điểm bắt đầu và kết thúc.
 
 Kích thước cửa sổ lấy theo độ phân giải màn hình hiện tại.
-# A*, GREEDY AND Dijkstra-ALGORITHMS
