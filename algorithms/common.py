@@ -27,7 +27,6 @@ type SearchGenerator = Generator[SearchStep, None, SearchResult]
 
 
 def validate_maze(maze: np.ndarray, start: Coordinate, goal: Coordinate) -> None:
-    """Require a nonempty weighted grid and two open, in-bounds endpoints."""
     if maze.ndim != 2 or not maze.size:
         raise ValueError("Maze must be a nonempty 2D array.")
     if not np.issubdtype(maze.dtype, np.number) or np.iscomplexobj(maze):
