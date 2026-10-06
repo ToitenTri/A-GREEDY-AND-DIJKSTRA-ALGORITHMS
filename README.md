@@ -16,7 +16,7 @@
 
 Ứng dụng trực quan hóa và so sánh 3 thuật toán tìm đường trên **cùng một mê cung có trọng số**:
 
-- **Uniform Cost Search (UCS)**
+- **Dijkstra**
 - **A\***
 - **Greedy Best-First Search**
 
@@ -50,7 +50,7 @@ pip install -r requirements.txt
 ├── main.py
 ├── maze_generator.py
 ├── algorithms/
-│   ├── ucs.py
+│   ├── dijkstra.py
 │   ├── a_star.py
 │   └── greedy.py
 ├── visual/
@@ -86,7 +86,7 @@ Sau khi cả 3 thuật toán hoàn tất, biểu đồ được lưu tại:
 Mỗi file thuật toán đều có khối `if __name__ == "__main__":` để chạy thử độc lập:
 
 ```bash
-python algorithms/ucs.py
+python algorithms/dijkstra.py
 python algorithms/a_star.py
 python algorithms/greedy.py
 ```
@@ -102,7 +102,7 @@ Kết quả in ra gồm:
 
 ## 5. Giải thích thuật toán
 
-### 5.1 Uniform Cost Search (UCS)
+### 5.1 Dijkstra
 
 **Ý tưởng:** luôn mở rộng ô có **chi phí tích lũy nhỏ nhất từ start**.
 
@@ -116,7 +116,7 @@ Kết quả in ra gồm:
 
 - `g(n)`: chi phí thực từ start
 - `h(n)`: heuristic Manhattan tới goal
-- Thường ít duyệt hơn UCS vì được “dẫn hướng” tới đích
+- Thường ít duyệt hơn Dijkstra vì được “dẫn hướng” tới đích
 - Khi heuristic phù hợp, vẫn giữ chất lượng đường đi tốt
 
 ### 5.3 Greedy Best-First Search
@@ -125,13 +125,13 @@ Kết quả in ra gồm:
 
 - Không tối ưu theo chi phí thực
 - Trực quan thường “lao nhanh” về phía đích
-- Có thể cho đường đi chi phí cao hơn UCS/A\*
+- Có thể cho đường đi chi phí cao hơn Dijkstra/A\*
 
 ---
 
 ## 6. Giải thích các hàm trong từng module thuật toán
 
-Ba module (`ucs.py`, `a_star.py`, `greedy.py`) có cùng khung:
+Ba module (`dijkstra.py`, `a_star.py`, `greedy.py`) có cùng khung:
 
 ### 6.1 `SearchStep` (dataclass)
 
@@ -160,7 +160,7 @@ Khôi phục đường đi từ bảng `parent` bằng cách đi ngược từ `
 
 ### 6.5 Hàm chính dạng generator
 
-- `ucs_steps(...)`
+- `dijkstra_steps(...)`
 - `astar_steps(...)`
 - `greedy_steps(...)`
 
@@ -172,7 +172,7 @@ Các hàm này:
 
 ### 6.6 Hàm chạy đầy đủ (không animation)
 
-- `run_ucs(...)`
+- `run_dijkstra(...)`
 - `run_astar(...)`
 - `run_greedy(...)`
 
@@ -182,7 +182,7 @@ Các hàm này tiêu thụ toàn bộ generator và trả về kết quả cuố
 
 ## 7. Ghi chú trực quan khi quan sát
 
-- **Uniform Cost Search (UCS)**: vùng tô màu thường lan rộng.
+- **Dijkstra**: vùng tô màu thường lan rộng.
 - **A\***: vùng tô tập trung hơn theo hướng đích.
 - **Greedy**: thường tiến nhanh về đích nhưng có thể kém tối ưu chi phí.
 
@@ -199,4 +199,4 @@ Các hàm này tiêu thụ toàn bộ generator và trả về kết quả cuố
 5. Level 5: `36x36`, `wall_prob=0.30`
 
 Màn hình chạy ở độ phân giải **Full HD (1920x1080)**.
-# A*, GREEDY AND UCS-ALGORITHMS
+# A*, GREEDY AND Dijkstra-ALGORITHMS
