@@ -29,6 +29,41 @@ class AgentPanel:
     runtime: float = 0.0
     cost: float = 0.0
     explored_nodes: int = 0
+    weight_labels: dict = field(default_factory=dict, init=False, repr=False)
+    show_heuristic: bool = False
+
+    def __post_init__(self):
+        # Cache labels for both weights and Manhattan distances.
+        font = pygame.font.Font(None, max(6, int(self.cell_size * 0.85)))
+        available = max(1, self.cell_size - 3)
+        rows, cols = self.maze.shape
+        max_h = max(self.goal[0], rows - 1 - self.goal[0]) + max(self.goal[1], cols - 1 - self.goal[1])
+        values = set(range(max_h + 1)) | {int(weight) for weight in np.unique(self.maze) if weight != -1}
+        for weight in values:
+            label = font.render(str(int(weight)), True, (20, 20, 20))
+            width, height = label.get_size()
+            scale = min(1.0, available / width, available / height)
+            if scale < 1.0:
+                label = pygame.transform.smoothscale(
+                    label, (max(1, int(width * scale)), max(1, int(height * scale)))
+                )
+            self.weight_labels[int(weight)] = label
+
+    def displayed_value(self, row: int, col: int) -> int:
+        if self.show_heuristic:
+            return abs(row - self.goal[0]) + abs(col - self.goal[1])
+        # Starting here costs nothing; other cells show their entry weight.
+        if (row, col) == self.start:
+            return 0
+        return int(self.maze[row, col])
+
+    def cell_at(self, position):
+        x = position[0] - self.panel_rect.x
+        y = position[1] - self.panel_rect.y
+        rows, cols = self.maze.shape
+        if 0 <= x < cols * self.cell_size and 0 <= y < rows * self.cell_size:
+            return y // self.cell_size, x // self.cell_size
+        return None
 
     def tick(self):
         if self.done:
@@ -73,6 +108,9 @@ class AgentPanel:
                     color = (255, 90, 90)
 
                 pygame.draw.rect(screen, color, rect)
+                if self.maze[r, c] != -1:
+                    label = self.weight_labels[self.displayed_value(r, c)]
+                    screen.blit(label, label.get_rect(center=rect.center))
 
         metrics = {
             "status": "done" if self.done else "running",

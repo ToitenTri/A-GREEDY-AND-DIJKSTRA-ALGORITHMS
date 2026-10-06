@@ -48,6 +48,7 @@ pip install -r requirements.txt
 ```text
 .
 ├── main.py
+├── maze_generator.json
 ├── maze_generator.py
 ├── algorithms/
 │   ├── dijkstra.py
@@ -71,9 +72,21 @@ python main.py
 
 Điều khiển trong cửa sổ:
 
-- `R`: sinh mê cung ngẫu nhiên mới
-- `F`: quay về mê cung cố định (`seed=42`)
-- `UP`/`DOWN`: tăng/giảm level độ khó (5 level)
+- `1`–`5`: chọn một trong 5 bản đồ cố định
+- `UP`/`DOWN`: chuyển bản đồ
+- Chuột trái: chọn điểm bắt đầu trên ô mở ở bất kỳ bảng thuật toán nào
+- Chuột phải: chọn điểm kết thúc trên ô mở ở bất kỳ bảng thuật toán nào
+- `R`: chạy lại trên bản đồ và các điểm đang chọn
+- `H`: đổi số trong ô giữa trọng số và heuristic Manhattan tới đích (đích có h = 0).
+  Đây chỉ là chế độ hiển thị, không thay đổi cost hoặc khởi động lại thuật toán.
+  Trong chế độ trọng số, ô bắt đầu hiển thị 0 vì chưa di chuyển; các ô khác
+  hiển thị chi phí đi vào ô. Tổng Cost bỏ ô bắt đầu và tính cả ô đích.
+  Trong chế độ heuristic, mọi ô hiển thị khoảng cách Manhattan tới đích.
+- `ESC`: thoát
+
+Khi đổi điểm bắt đầu hoặc kết thúc, cả 3 thuật toán chạy lại. Các điểm
+được giữ khi chuyển qua lại giữa bản đồ trong phiên hiện tại. Ô tường
+không thể được chọn. Bản đồ không thay đổi giữa các lần chạy ứng dụng.
 
 Sau khi cả 3 thuật toán hoàn tất, biểu đồ được lưu tại:
 
@@ -188,15 +201,18 @@ Các hàm này tiêu thụ toàn bộ generator và trả về kết quả cuố
 
 ---
 
-## 8. Level độ khó (5 mức)
+## 8. Năm bản đồ cố định
 
-Ứng dụng có 5 level từ dễ đến khó:
+Ứng dụng đọc 5 bản đồ có trọng số từ `maze_generator.json`, không sinh ngẫu nhiên khi chạy:
 
-1. Level 1: `20x20`, `wall_prob=0.14`
-2. Level 2: `24x24`, `wall_prob=0.18`
-3. Level 3: `28x28`, `wall_prob=0.22`
-4. Level 4: `32x32`, `wall_prob=0.26`
-5. Level 5: `36x36`, `wall_prob=0.30`
+1. Map 1: `20x20`
+2. Map 2: `24x24`
+3. Map 3: `28x28`
+4. Map 4: `32x32`
+5. Map 5: `36x36`
 
-Màn hình chạy ở độ phân giải **Full HD (1920x1080)**.
+Tất cả ô mở của mỗi bản đồ thuộc cùng một vùng liên thông, nên có thể
+chọn bất kỳ hai ô mở làm điểm bắt đầu và kết thúc.
+
+Kích thước cửa sổ lấy theo độ phân giải màn hình hiện tại.
 # A*, GREEDY AND Dijkstra-ALGORITHMS

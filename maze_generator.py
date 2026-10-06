@@ -1,8 +1,10 @@
 ﻿from __future__ import annotations
 
+import json
 import random
 from collections import deque
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Callable, Tuple
 
 import numpy as np
@@ -16,6 +18,19 @@ class MazeData:
     start: Coordinate
     goal: Coordinate
     seed: int | None = None
+
+
+def load_fixed_mazes():
+    """Đọc 5 bản đồ đã lưu, không sinh mê cung ngẫu nhiên khi chạy."""
+    records = json.loads(Path(__file__).with_name('maze_generator.json').read_text(encoding='utf-8'))
+    return [
+        (record['name'], MazeData(
+            maze=np.array(record['maze'], dtype=np.int32),
+            start=tuple(record['start']),
+            goal=tuple(record['goal']),
+        ))
+        for record in records
+    ]
 
 
 def _remove_isolated_regions(maze: np.ndarray, start: Coordinate) -> None:

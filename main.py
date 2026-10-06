@@ -1,36 +1,24 @@
 from __future__ import annotations
 
 from pathlib import Path
+from dataclasses import replace
 
 import pygame
 
-from algorithms.dijkstra import dijkstra_steps, run_dijkstra
+from algorithms.dijkstra import dijkstra_steps
 from algorithms.a_star import astar_steps
 from algorithms.greedy import greedy_steps
-from maze_generator import regenerate_until_path
+from maze_generator import load_fixed_mazes
 from report.plot_results import plot_results
 from visual.scoreboard import Scoreboard
 from visual.window_agent import AgentPanel
 
-LEVELS = [
-    {"name": "Level 1 (De)", "rows": 20, "cols": 20, "wall_prob": 0.14},
-    {"name": "Level 2", "rows": 24, "cols": 24, "wall_prob": 0.18},
-    {"name": "Level 3", "rows": 28, "cols": 28, "wall_prob": 0.22},
-    {"name": "Level 4", "rows": 32, "cols": 32, "wall_prob": 0.26},
-    {"name": "Level 5 (Kho)", "rows": 36, "cols": 36, "wall_prob": 0.30},
-]
-
-
-def _has_path(maze, start, goal) -> bool:
-    return bool(run_dijkstra(maze, start, goal).path)
-
-
-def build_panels(screen_w: int, screen_h: int, maze_data, font):
+def build_panels(screen_w: int, screen_h: int, maze_data, font, show_heuristic=False):
     maze, start, goal = maze_data.maze, maze_data.start, maze_data.goal
 
     margin = 12
     panel_w = (screen_w - margin * 4) // 3
-    panel_h = screen_h - margin * 2
+    panel_h = screen_h - margin * 2 - 90
 
     rows, cols = maze.shape
     info_h = 130
@@ -47,7 +35,8 @@ def build_panels(screen_w: int, screen_h: int, maze_data, font):
     for i, (name, gen) in enumerate(algos):
         x = margin + i * (panel_w + margin)
         rect = pygame.Rect(x, margin, panel_w, panel_h)
-        panels.append(AgentPanel(name, maze.copy(), start, goal, gen, Scoreboard(font, name), rect, cell_size))
+        panels.append(AgentPanel(name, maze.copy(), start, goal, gen, Scoreboard(font, name), rect, cell_size,
+                                 show_heuristic=show_heuristic))
     return panels
 
 
@@ -62,18 +51,10 @@ def main():
     font = pygame.font.SysFont("consolas", 20)
     small_font = pygame.font.SysFont("consolas", 18)
 
+    fixed_maps = load_fixed_mazes()
     level_idx = 0
-    seed = 42
-    cfg = LEVELS[level_idx]
-    try:
-        maze_data = regenerate_until_path(
-            _has_path, rows=cfg["rows"], cols=cfg["cols"], wall_prob=cfg["wall_prob"], seed=seed
-        )
-    except RuntimeError as error:
-        print(f"Cannot generate initial maze: {error}")
-        pygame.quit()
-        return
-    seed = maze_data.seed if maze_data.seed is not None else seed
+    maze_data = fixed_maps[level_idx][1]
+    show_heuristic = False
     panels = build_panels(screen_w, screen_h, maze_data, font)
 
     error_message = ""
@@ -84,33 +65,44 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key not in (pygame.K_r, pygame.K_f, pygame.K_UP, pygame.K_DOWN):
+                if event.key == pygame.K_h:
+                    show_heuristic = not show_heuristic
+                    for panel in panels:
+                        panel.show_heuristic = show_heuristic
                     continue
-                next_level_idx, next_seed = level_idx, seed
-                if event.key == pygame.K_r:
-                    next_seed = seed + 1
-                elif event.key == pygame.K_f:
-                    next_seed = 42
+                next_level_idx = level_idx
+                if pygame.K_1 <= event.key <= pygame.K_5:
+                    next_level_idx = event.key - pygame.K_1
                 elif event.key == pygame.K_UP:
-                    next_level_idx = min(level_idx + 1, len(LEVELS) - 1)
+                    next_level_idx = min(level_idx + 1, len(fixed_maps) - 1)
                 elif event.key == pygame.K_DOWN:
                     next_level_idx = max(level_idx - 1, 0)
-                if event.key in (pygame.K_UP, pygame.K_DOWN) and next_level_idx == level_idx:
+                elif event.key == pygame.K_ESCAPE:
+                    running = False
                     continue
-                next_cfg = LEVELS[next_level_idx]
-                try:
-                    next_maze_data = regenerate_until_path(
-                        _has_path, rows=next_cfg["rows"], cols=next_cfg["cols"],
-                        wall_prob=next_cfg["wall_prob"], seed=next_seed
-                    )
-                except RuntimeError as error:
-                    print(f"Cannot generate maze: {error}")
-                    error_message = "Cannot generate maze. Press R or F to retry."
+                elif event.key != pygame.K_r:
+                    continue
+                if next_level_idx == level_idx and event.key in (pygame.K_UP, pygame.K_DOWN):
                     continue
                 level_idx = next_level_idx
-                maze_data = next_maze_data
-                seed = maze_data.seed if maze_data.seed is not None else next_seed
-                panels = build_panels(screen_w, screen_h, maze_data, font)
+                maze_data = fixed_maps[level_idx][1]
+                panels = build_panels(screen_w, screen_h, maze_data, font, show_heuristic)
+                summary_done = False
+                error_message = ""
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button in (1, 3):
+                cell = next((cell for panel in panels if (cell := panel.cell_at(event.pos)) is not None), None)
+                if cell is None:
+                    continue
+                if maze_data.maze[cell] == -1:
+                    error_message = "Choose an open cell, not a wall."
+                    continue
+                if event.button == 1:
+                    maze_data = replace(maze_data, start=cell)
+                else:
+                    maze_data = replace(maze_data, goal=cell)
+                name, _ = fixed_maps[level_idx]
+                fixed_maps[level_idx] = (name, maze_data)
+                panels = build_panels(screen_w, screen_h, maze_data, font, show_heuristic)
                 summary_done = False
                 error_message = ""
 
@@ -132,13 +124,14 @@ def main():
             plot_results(results, output_path=str(Path(__file__).parent / "report" / "comparison.png"))
             summary_done = True
 
-        cfg = LEVELS[level_idx]
+        rows, cols = maze_data.maze.shape
+        label_mode = "Heuristic h (Manhattan)" if show_heuristic else "Entry weight (Start=0)"
         level_text = small_font.render(
-            f"{cfg['name']} | size={cfg['rows']}x{cfg['cols']} | wall_prob={cfg['wall_prob']:.2f} | seed={seed}",
+            f"{fixed_maps[level_idx][0]} | {rows}x{cols} | Start: {maze_data.start} | Goal: {maze_data.goal} | Cell numbers: {label_mode}",
             True,
             (230, 230, 230),
         )
-        hint = small_font.render("R: random | F: fixed(seed=42) | UP/DOWN: level", True, (230, 230, 230))
+        hint = small_font.render("1-5 / UP/DOWN: map | Left click: start | Right click: goal | H: weight/heuristic | R: replay | ESC: quit", True, (230, 230, 230))
         screen.blit(level_text, (12, screen_h - 56))
         screen.blit(hint, (12, screen_h - 30))
         if error_message:
